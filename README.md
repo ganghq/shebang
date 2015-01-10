@@ -1,0 +1,2 @@
+# shebang
+Scala chat POC
