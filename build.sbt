@@ -23,7 +23,8 @@ libraryDependencies ++= Seq(
   "org.webjars" % "requirejs" % "2.1.11-1",
   "org.webjars" % "angularjs" % "1.3.2",
   "org.webjars" % "jquery" % "2.1.1",
-  "org.webjars" % "lodash" % "2.4.1-6"
+  "org.webjars" % "lodash" % "2.4.1-6",
+  "org.webjars" % "holderjs" % "2.4.0"
 )
 
 PlayKeys.playDefaultPort := 9000
