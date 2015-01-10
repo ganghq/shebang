@@ -52,23 +52,6 @@
             <hr/>
 
             <div class="row">
-                <div class="col-xs-12">
-
-                    <div class="media" ng-repeat="post in posts">
-                        <a class="media-left" href="#">
-                            <img alt="64x64" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/PjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+PGRlZnMvPjxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgZmlsbD0iI0VFRUVFRSIvPjxnPjx0ZXh0IHg9IjE1LjMxMjUiIHk9IjMyIiBzdHlsZT0iZmlsbDojQUFBQUFBO2ZvbnQtd2VpZ2h0OmJvbGQ7Zm9udC1mYW1pbHk6QXJpYWwsIEhlbHZldGljYSwgT3BlbiBTYW5zLCBzYW5zLXNlcmlmLCBtb25vc3BhY2U7Zm9udC1zaXplOjEycHg7ZG9taW5hbnQtYmFzZWxpbmU6Y2VudHJhbCI+NjR4NjQ8L3RleHQ+PC9nPjwvc3ZnPg==">
-                        </a>
-                        <div class="media-body">
-                            <h4 class="media-heading">UID: <code>{{post.uid}}</code>, type: <code>{{post.type}}</code></h4>
-                            MSG: {{post.msg}}
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-
-            <div class="row">
                 <div class="col-xs-3 strong text-right">
                     Try Me:
                 </div>
@@ -83,6 +66,25 @@
                     </form>
                 </div>
             </div>
+            <br/>
+            <div class="row">
+                <div class="col-xs-12">
+
+                    <div class="media" ng-repeat="post in posts">
+                        <a class="media-left" href="#">
+                            <img alt="64x64" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/PjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+PGRlZnMvPjxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgZmlsbD0iI0VFRUVFRSIvPjxnPjx0ZXh0IHg9IjE1LjMxMjUiIHk9IjMyIiBzdHlsZT0iZmlsbDojQUFBQUFBO2ZvbnQtd2VpZ2h0OmJvbGQ7Zm9udC1mYW1pbHk6QXJpYWwsIEhlbHZldGljYSwgT3BlbiBTYW5zLCBzYW5zLXNlcmlmLCBtb25vc3BhY2U7Zm9udC1zaXplOjEycHg7ZG9taW5hbnQtYmFzZWxpbmU6Y2VudHJhbCI+NjR4NjQ8L3RleHQ+PC9nPjwvc3ZnPg==">
+                        </a>
+                        <div class="media-body">
+                            <h4 class="media-heading">UID: <code>{{post.self?"Me" : post.uid }}</code>, type: <code>{{post.type}}</code></h4>
+                            {{post.msg}}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+
+
 
 
             <hr>

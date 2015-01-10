@@ -17,7 +17,7 @@ class UserActor(uid: String, channel: ActorRef, out: ActorRef) extends Actor wit
      * from channel
      */
     case Message(_uid, s) if sender == channel =>
-      val js = Json.obj("type" -> "message", "uid" -> _uid, "msg" -> s)
+      val js = Json.obj("type" -> "message", "uid" -> _uid, "msg" -> s, "self" -> (uid == _uid))
       out ! js
 
     /**

@@ -25,7 +25,7 @@ app.factory('chatApi', function ($websocket) {
         var message = JSON.parse(message.data);
 
         if (message.type === "message") {
-            posts.push(message);
+            posts.unshift(message);
         } else {
             if (window.console) {
                 console.error("Unsupported message type. data: ", message);
