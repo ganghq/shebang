@@ -1,5 +1,7 @@
 package actors
 
+import java.util
+
 import akka.actor.Actor
 import akka.actor.ActorLogging
 import akka.event.LoggingReceive
@@ -24,6 +26,7 @@ class ChannelActor extends Actor with ActorLogging {
 
       users foreach {
         _ ! m
+
       }
 
     /**
@@ -60,13 +63,16 @@ class ChannelActor extends Actor with ActorLogging {
   override def preStart() = {
     context.system.scheduler.schedule(3 seconds, 30 seconds, self, BroadcastStatus)
   }
-
+ChannelActor()
 
 }
 
 
+
 object ChannelActor {
   lazy val channel = Akka.system().actorOf(Props[ChannelActor])
+  lazy val generalChannel = Akka.system().actorOf(Props[ChannelActor])
+  lazy val generalChannel2 = Akka.system().actorOf(Props[ChannelActor])
 
   def apply() = channel
 }
