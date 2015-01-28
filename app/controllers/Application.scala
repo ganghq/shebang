@@ -77,7 +77,7 @@ object backApi {
   object protocol {
 
     //{"appUser":{"id":13,"username":"sumnulu","firstName":"","lastName":"","email":"ilgaz@fikrimuhal.com","teams":[]}}
-    case class AppUser(id: Long, username: String, firstName: String = "", lastName: String = "", email: String, teams: List[Long])
+    case class AppUser(id: Long, username: String, firstName: String = "", lastName: String = "", email: String/*, teams: List[Long]*/)
     implicit val jsonAppUser = Json.format[AppUser]
 
   }
