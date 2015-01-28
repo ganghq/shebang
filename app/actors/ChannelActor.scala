@@ -63,10 +63,10 @@ class ChannelActor extends Actor with ActorLogging {
   override def preStart() = {
     context.system.scheduler.schedule(3 seconds, 30 seconds, self, BroadcastStatus)
   }
-ChannelActor()
+
+  ChannelActor()
 
 }
-
 
 
 object ChannelActor {
@@ -77,7 +77,7 @@ object ChannelActor {
   def apply() = channel
 }
 
-case class Message(uid: String, s: String)
+case class Message(uid: String, s: String, channel: String = "")
 
 case class UserList(users: List[String])
 
