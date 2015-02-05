@@ -3,7 +3,7 @@ import com.typesafe.sbt.web.SbtWeb
 import play.PlayImport._
 import play.PlayScala
 
-name := """shebag"""
+name := """shebang"""
 
 version := "1.0-SNAPSHOT"
 
