@@ -9,6 +9,7 @@ import akka.actor.Props
 
 
 class UserActor(uid: String, channel: ActorRef, out: ActorRef) extends Actor with ActorLogging {
+
   override def preStart() = channel ! Subscribe
 
   def receive = {
@@ -16,9 +17,10 @@ class UserActor(uid: String, channel: ActorRef, out: ActorRef) extends Actor wit
     /**
      * from channel
      */
-    case Message(_uid, s) if sender == channel =>
-      val js = Json.obj("type" -> "message", "uid" -> _uid, "msg" -> s, "self" -> (uid == _uid))
+    case Message(_uid, s, c) if sender == channel =>
+      val js = Json.obj("type" -> "message", "uid" -> _uid, "msg" -> s, "channel" -> c, "self" -> (uid == _uid))
       out ! js
+
 
     /**
      * from client
@@ -26,13 +28,19 @@ class UserActor(uid: String, channel: ActorRef, out: ActorRef) extends Actor wit
      * todo filter only allowed html/xml tags i.e. <b>, <img>, etc.
      */
     case js: JsValue =>
-      (js \ "msg").validate[String] foreach {
-        channel ! Message(uid, _)
+      (js \ "msg").validate[String] foreach { message =>
+        (js \ "channel").validate[String] foreach { channelId =>
+          channel ! Message(uid, message, channelId)
+
+        }
       }
 
     case other =>
       log.error("unhandled: " + other)
+
   }
+
+
 }
 
 object UserActor {
