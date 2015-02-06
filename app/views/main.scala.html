@@ -16,7 +16,7 @@
 
         //formatter:off
         var conf = {
-            wsUrl : "@routes.Application.ws().webSocketURL()"
+            wsUrl : "@routes.Application.ws(token="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJjcmVhdGVkQXQiOjE0MjI0NzU4MzU1MDAsInVzZXJJZCI6MTMsImVtYWlsIjoiaWxnYXpAZmlrcmltdWhhbC5jb20iLCJ1c2VybmFtZSI6InN1bW51bHUifQ.2s6Xjv6HfjYeZJlmhurb9jIeWKjRyxV-k8IZUPpFCPU").webSocketURL()"
         }
         //formatter:on
         </script>
@@ -61,7 +61,7 @@
                             <input id="message_input" type="text" class="form-control" ng-model="message" placeholder="please type a message" />
                         </div>
                         <div class="col-xs-1">
-                            <button type="submit" class="btn btn-default" ng-click="send(message,this)">Submit</button>
+                            <button type="submit" class="btn btn-default" ng-click="send(message)">Submit</button>
                         </div>
                     </form>
                 </div>
