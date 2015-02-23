@@ -38,16 +38,18 @@ class ChannelActor extends Actor with ActorLogging {
       //watch the sender actor for Termination so we can deRegister them
       context watch sender
 
-      //sen last 20 message to the new User
-      posts take 20 foreach (sender ! _)
+      //send last 300 message for each channel to the new User
+      //todo send only users subscribed channels
+      (posts groupBy (_.channel) flatMap (_._2 take 300) toList).reverse foreach (sender ! _)
+
       sender ! Message("Cowboy Bebop (BOT)", "Gotta Knock a Little Harder!")
-      sender ! Message("Shebang", s"Hello welcome back #!")
+    //      sender ! Message("Shebang", s"Hello welcome back #!")
 
     /**
      * broadcast number of online users
      */
     case BroadcastStatus =>
-      users foreach (_ ! Message("Shebang", s" ${users.size} users online"))
+      users foreach (_ ! Message("_numberOfOnlineUsers", s"${users.size}"))
 
 
     /**

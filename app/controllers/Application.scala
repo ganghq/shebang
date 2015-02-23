@@ -57,12 +57,10 @@ object backApi {
 
 
     val base = "http://app.ganghq.com/api/me"
-    val tokeOfIlgaz = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJjcmVhdGVkQXQiOjE0MjI0NzU4MzU1MDAsInVzZXJJZCI6MTMsImVtYWlsIjoiaWxnYXpAZmlrcmltdWhhbC5jb20iLCJ1c2VybmFtZSI6InN1bW51bHUifQ.2s6Xjv6HfjYeZJlmhurb9jIeWKjRyxV-k8IZUPpFCPU"
-    val wrongToken = "FAIL"
-    //val token =  tokeOfIlgaz
 
     val meURL = s"$base?token=$token"
     val ws = WS.url(meURL)
+
     (ws get) map { (x: WSResponse) =>
       import protocol.jsonAppUser
       println(x.json)
