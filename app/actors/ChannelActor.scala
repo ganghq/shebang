@@ -29,6 +29,8 @@ class ChannelActor extends Actor with ActorLogging {
 
       }
 
+    case m: StatusUserTyping => users foreach (_ ! m)
+
     /**
      * Subscribe new user to this channel
      */
@@ -80,6 +82,8 @@ object ChannelActor {
 }
 
 case class Message(uid: String, s: String, channel: String = "")
+
+case class StatusUserTyping(uid: String, isTyping: Boolean, channel: String = "")
 
 case class UserList(users: List[String])
 
