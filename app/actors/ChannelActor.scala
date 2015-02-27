@@ -64,7 +64,13 @@ class ChannelActor extends Actor with ActorLogging {
      */
     case Terminated(user) => onlineUsers.get(user).map { uid =>
       onlineUsers -= user
-      onlineUsers foreach { case (userActor, _) => userActor ! Message("_userStatusChanged_OFFLINE", uid)}
+
+      // Eger bu user'i cikartinca ve baska ayni uid li user kalmazsa o zaman OFFLINE oldu mesaji yolla.
+      val userIsOffline = !onlineUsers.values.exists(_ == uid)
+
+      if (userIsOffline) {
+        onlineUsers foreach { case (userActor, _) => userActor ! Message("_userStatusChanged_OFFLINE", uid)}
+      }
     }
 
 
