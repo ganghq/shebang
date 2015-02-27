@@ -1,5 +1,6 @@
 package controllers
 
+import java.net.URI
 import java.util.UUID.randomUUID
 
 import actors.UserActor
@@ -53,8 +54,9 @@ object Application extends Controller {
 
   def escapedFragment() = Action { implicit request =>
     request.getQueryString("_escaped_fragment_").map { ef =>
+      val channelid = new URI(ef).getPath.substring(2)
 
-      Ok(views.html.renderedChannel(ef))
+      Ok(views.html.renderedChannel(channelid))
     }.getOrElse {
 
       Ok(views.html.renderedChannel("000000"))
