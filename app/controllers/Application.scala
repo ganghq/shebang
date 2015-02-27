@@ -29,7 +29,7 @@ object Application extends Controller {
   }
 
 
-  def ws(token:String) = WebSocket.tryAcceptWithActor[JsValue, JsValue] { request =>
+  def ws(token: String) = WebSocket.tryAcceptWithActor[JsValue, JsValue] { request =>
 
     import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -47,8 +47,19 @@ object Application extends Controller {
   }
 
 
-  def renderChannel(id:String) =  Action { implicit request =>
+  def renderChannel(id: String) = Action { implicit request =>
     Ok(views.html.renderedChannel(id))
+  }
+
+  def escapedFragment() = Action { implicit request =>
+    request.getQueryString("_escaped_fragment_").map { ef =>
+
+      Ok(views.html.renderedChannel(ef))
+    }.getOrElse {
+
+      Ok(views.html.renderedChannel("000000"))
+
+    }
   }
 }
 
@@ -72,13 +83,13 @@ object backApi {
     }
 
 
-
   }
 
   object protocol {
 
     //{"appUser":{"id":13,"username":"sumnulu","firstName":"","lastName":"","email":"ilgaz@fikrimuhal.com","teams":[]}}
-    case class AppUser(id: Long, username: String, firstName: String = "", lastName: String = "", email: String/*, teams: List[Long]*/)
+    case class AppUser(id: Long, username: String, firstName: String = "", lastName: String = "", email: String /*, teams: List[Long]*/)
+
     implicit val jsonAppUser = Json.format[AppUser]
 
   }
