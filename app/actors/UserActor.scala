@@ -10,15 +10,15 @@ import akka.actor.Props
 
 class UserActor(uid: String, channel: ActorRef, out: ActorRef) extends Actor with ActorLogging {
 
-  override def preStart() = channel ! Subscribe
+  override def preStart() = channel ! Subscribe(uid)
 
   def receive = {
 
     /**
      * from channel
      */
-    case Message(_uid, s, c) if sender == channel =>
-      val js = Json.obj("type" -> "message", "uid" -> _uid, "msg" -> s, "channel" -> c, "self" -> (uid == _uid))
+    case Message(_uid, s, c, ts) if sender == channel =>
+      val js = Json.obj("type" -> "message", "uid" -> _uid, "msg" -> s, "channel" -> c, "ts" -> ts, "self" -> (uid == _uid))
       out ! js
 
     case StatusUserTyping(_uid, t, c) if (sender == channel) && (uid != _uid) => //do not send self typing status about them self
