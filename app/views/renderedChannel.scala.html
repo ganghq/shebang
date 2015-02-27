@@ -21,7 +21,7 @@ strategist at PeopleSoft, will have 67 percent of the voting rights after
 the I.P.O., according to the prospectus." />
 
         <meta property="og:image" content="@routes.Assets.at("images/cowboy1200_600_bang.jpg")" />
-        <meta property="og:url" content="@routes.Assets.at("http://ganghq.com/#!/"+id)" />
+        <meta property="og:url" content="http://ganghq.com/#!/@id" />
 
 
 
@@ -45,15 +45,7 @@ the I.P.O., according to the prospectus." />
     </head>
     <body>
         <div id="fb-root"></div>
-        <script>(function(d, s, id) {
-        var js, fjs = d.getElementsByTagName(s)[0];
-        if (d.getElementById(id)) return;
-        js = d.createElement(s); js.id = id;
-        js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.0";
-        fjs.parentNode.insertBefore(js, fjs);
-        }(document, 'script', 'facebook-jssdk'));</script>
-        <img src="http://ganghq.com/assets/img/gang-logo.png" class="gang-logo" />
-        <ui-view></ui-view>
+        DEBUG
 
         @for((k,v) <- request.queryString){
             <p><b>@k </b> <span>@v</span></p>
