@@ -1,0 +1,65 @@
+@(id:String)(implicit request: RequestHeader)
+
+<!doctype html>
+<html lang="en" ng-app="application">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+        <meta property="fb:app_id" content="343745845810440" />
+        <meta property="og:type" content="article" />
+        <meta property="og:site_name" content="Sitename_shebang_channelid: @id"/>
+        <meta property="og:title" content="SITE_TITLE_ title title title title title title title " />
+        <meta property="og:description" content="Workday, a provider of cloud-based
+applications for human resources, said on Monday that it would seek to price
+its initial public offering at $21 to $24 a share.  At the midpoint of that
+range, the offering would value the company at $3.6 billion. Like many other
+technology start-ups, Workday, founded in 2005, will have a dual-class share
+structure, with each Class B share having 10 votes. Its co-chief executives,
+David Duffield, the founder of PeopleSoft, and Aneel Bhusri, who was chief
+strategist at PeopleSoft, will have 67 percent of the voting rights after
+the I.P.O., according to the prospectus." />
+
+        <meta property="og:image" content="@routes.Assets.at("images/cowboy1200_600_bang.jpg")" />
+        <meta property="og:url" content="@routes.Assets.at("http://ganghq.com/#!/"+id)" />
+
+
+
+
+        <title>gang</title>
+        <link id="favicon" rel="shortcut icon" type="image/png" href="http://ganghq.com/assets/img/g-bg.png" />
+        <link href="http://ganghq.com/assets/css/app.css" rel="stylesheet" type="text/css">
+        <script src="http://ganghq.com/assets/js/foundation.js"></script>
+        <script src="http://ganghq.com/assets/js/routes.js"></script>
+        <script src="http://ganghq.com/assets/js/app.js"></script>
+        <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-60087234-1', 'auto');
+        //ga('send', 'pageview'); // disable for angulartics
+        </script>
+
+    </head>
+    <body>
+        <div id="fb-root"></div>
+        <script>(function(d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.0";
+        fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));</script>
+        <img src="http://ganghq.com/assets/img/gang-logo.png" class="gang-logo" />
+        <ui-view></ui-view>
+
+        @for((k,v) <- request.queryString){
+            <p><b>@k </b> <span>@v</span></p>
+        }
+        <hr/>
+        <p><b>HOST</b> @request.host</p>
+    </body>
+
+</html>

@@ -47,6 +47,9 @@ object Application extends Controller {
   }
 
 
+  def renderChannel(id:String) =  Action { implicit request =>
+    Ok(views.html.renderedChannel(id))
+  }
 }
 
 
