@@ -45,7 +45,11 @@ class ChannelActor extends Actor with ActorLogging {
 
       //      sender ! Message("Cowboy Bebop (BOT)", "Gotta Knock a Little Harder!")
       //      sender ! Message("Shebang", s"Hello welcome back #!")
+
+      //send status to every online user
       onlineUsers.keys foreach (_ ! Message("_userStatusChanged_ONLINE", uid))
+      //send every other online users status to sender
+      onlineUsers.values.filterNot(_ == uid) foreach (sender ! Message("_userStatusChanged_ONLINE", _))
 
 
     /**
