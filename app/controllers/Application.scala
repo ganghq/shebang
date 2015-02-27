@@ -54,7 +54,7 @@ object Application extends Controller {
 
   def escapedFragment() = Action { implicit request =>
     request.getQueryString("_escaped_fragment_").map { ef =>
-      val channelid = new URI(ef).getPath.substring(2)
+      val channelid = new URI(ef).getPath.substring(1)
 
       Ok(views.html.renderedChannel(channelid))
     }.getOrElse {
