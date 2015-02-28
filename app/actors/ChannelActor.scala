@@ -40,11 +40,11 @@ class ChannelActor(channelId: String) extends Actor with ActorLogging {
 
       //send last 300 message for each channel to the new User
       //todo send only users subscribed channels
-      sender ! Message("_replyingChannelHistory_STARTED", "mark")
+      sender ! Message("_replyingChannelHistory_STARTED", "mark", channelId)
 
       (posts take 300).reverse foreach (sender ! _)
 
-      sender ! Message("_replyingChannelHistory_FINISHED", "mark")
+      sender ! Message("_replyingChannelHistory_FINISHED", "mark", channelId)
 
       //      sender ! Message("Cowboy Bebop (BOT)", "Gotta Knock a Little Harder!")
       //      sender ! Message("Shebang", s"Hello welcome back #!")
