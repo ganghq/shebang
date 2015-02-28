@@ -1,6 +1,5 @@
 package actors
 
-import java.util
 
 import akka.actor.Actor
 import akka.actor.ActorLogging
@@ -116,3 +115,5 @@ case class UserList(users: List[String])
 case class Subscribe(uid: String)
 
 object BroadcastStatus
+
+object Ping

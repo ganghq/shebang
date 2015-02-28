@@ -6,6 +6,7 @@ import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import akka.actor.ActorRef
 import akka.actor.Props
+import scala.concurrent.duration._
 
 
 class UserActor(uid: String, channels: Map[String, ActorRef], out: ActorRef) extends Actor with ActorLogging {
@@ -54,9 +55,22 @@ class UserActor(uid: String, channels: Map[String, ActorRef], out: ActorRef) ext
         }
       }
 
+    case Ping =>
+      val js = Json.obj("type" -> "ping", "ts" -> System.currentTimeMillis)
+      out ! js
+
     case other =>
       log.error("unhandled: " + other)
 
+
+  }
+
+  override def preStart() = {
+
+    /**
+     * For keeping connection alive
+     */
+    context.system.scheduler.schedule(30 seconds, 45 seconds, self, Ping)
   }
 
 
