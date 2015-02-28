@@ -16,7 +16,6 @@ class UserActor(uid: String, channels: Map[String, ActorRef], out: ActorRef) ext
    */
   lazy val _channelsActrs = channels.values.toSet
 
-  override def preStart() = _channelsActrs.foreach(_ ! Subscribe(uid))
 
   def receive = {
 
@@ -67,6 +66,9 @@ class UserActor(uid: String, channels: Map[String, ActorRef], out: ActorRef) ext
 
   override def preStart() = {
     import scala.concurrent.ExecutionContext.Implicits.global
+
+    _channelsActrs.foreach(_ ! Subscribe(uid))
+
     /**
      * For keeping connection alive
      */
