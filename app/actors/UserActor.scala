@@ -66,7 +66,7 @@ class UserActor(uid: String, channels: Map[String, ActorRef], out: ActorRef) ext
   }
 
   override def preStart() = {
-
+    import scala.concurrent.ExecutionContext.Implicits.global
     /**
      * For keeping connection alive
      */
