@@ -8,20 +8,25 @@ import akka.actor.ActorRef
 import akka.actor.Props
 
 
-class UserActor(uid: String, channel: ActorRef, out: ActorRef) extends Actor with ActorLogging {
+class UserActor(uid: String, channels: Map[String, ActorRef], out: ActorRef) extends Actor with ActorLogging {
 
-  override def preStart() = channel ! Subscribe(uid)
+  /**
+   * for a small performance gain
+   */
+  lazy val _channelsActrs = channels.values.toSet
+
+  override def preStart() = _channelsActrs.foreach(_ ! Subscribe(uid))
 
   def receive = {
 
     /**
      * from channel
      */
-    case Message(_uid, s, c, ts) if sender == channel =>
+    case Message(_uid, s, c, ts) if _channelsActrs.contains(sender) =>
       val js = Json.obj("type" -> "message", "uid" -> _uid, "msg" -> s, "channel" -> c, "ts" -> ts, "self" -> (uid == _uid))
       out ! js
 
-    case StatusUserTyping(_uid, t, c) if (sender == channel) && (uid != _uid) => //do not send self typing status about them self
+    case StatusUserTyping(_uid, t, c) if _channelsActrs.contains(sender) && (uid != _uid) => //do not send self typing status about them self
       val js = Json.obj("type" -> "cmd_usr_typing", "uid" -> _uid, "isTyping" -> t, "channel" -> c)
       out ! js
 
@@ -37,11 +42,11 @@ class UserActor(uid: String, channel: ActorRef, out: ActorRef) extends Actor wit
           msg_type match {
             case "message" =>
               (js \ "msg").validate[String] foreach { message =>
-                channel ! Message(uid, message, channelId)
+                channels get channelId foreach (_ ! Message(uid, message, channelId))
               }
             case "cmd_usr_typing" =>
               (js \ "isTyping").validate[Boolean] foreach { isTyping =>
-                channel ! StatusUserTyping(uid, isTyping, channelId)
+                channels get channelId foreach (_ ! StatusUserTyping(uid, isTyping, channelId))
               }
             case other =>
               log.error("unknown message type do nothing!: " + js.toString)
@@ -58,5 +63,14 @@ class UserActor(uid: String, channel: ActorRef, out: ActorRef) extends Actor wit
 }
 
 object UserActor {
-  def props(uid: String)(out: ActorRef) = Props(new UserActor(uid, ChannelActor(), out))
+  def props(uid: String, channelIds: Seq[Long])(out: ActorRef) = {
+    val channels = (channelIds map (id => (id.toString, ChannelActor(id toString)))).toMap
+
+    //used by broadcast messages (workaround maybe buggy)
+    val channelsWithDefault = channels + ("" -> ChannelActor.defaultChannel)
+
+    Props(new UserActor(uid, channelsWithDefault, out))
+  }
+
+
 }

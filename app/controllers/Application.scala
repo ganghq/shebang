@@ -4,9 +4,10 @@ import java.net.URI
 import java.util.UUID.randomUUID
 
 import actors.UserActor
-import controllers.backApi.protocol.AppUser
+import controllers.backApi.protocol
+import controllers.backApi.protocol.{Team, AppUser}
 import play.api._
-import play.api.libs.json.{Json, JsValue}
+import play.api.libs.json.{JsResult, Json, JsValue}
 import play.api.libs.ws.{WSResponse, WS}
 import play.api.mvc._
 import play.api.Play.current
@@ -31,14 +32,18 @@ object Application extends Controller {
 
 
   def ws(token: String) = WebSocket.tryAcceptWithActor[JsValue, JsValue] { request =>
+    import protocol._
 
     import scala.concurrent.ExecutionContext.Implicits.global
 
     println("token = " + token)
     backApi.me(token).map { (appUser: AppUser) =>
 
+      val channels: Seq[Long] = (appUser.teams \\ "team").map(_.validate[Team](jsonTeam).asOpt).filter(_.isDefined).map(_.get.id)
+      println("teams = " + channels)
+
       val uid: String = appUser.username
-      Right(UserActor.props(uid) _)
+      Right(UserActor.props(uid, channels) _)
     }.recover {
       case error =>
         println(error)
@@ -79,7 +84,7 @@ object backApi {
 
     (ws get) map { (x: WSResponse) =>
       import protocol.jsonAppUser
-      println(x.json)
+      //      println(x.json)
       val result = x.json
       (result \ "appUser").validate[AppUser](jsonAppUser).get
     }
@@ -90,9 +95,22 @@ object backApi {
   object protocol {
 
     //{"appUser":{"id":13,"username":"sumnulu","firstName":"","lastName":"","email":"ilgaz@fikrimuhal.com","teams":[]}}
-    case class AppUser(id: Long, username: String, firstName: String = "", lastName: String = "", email: String /*, teams: List[Long]*/)
+
+    /*
+    channels: [{id: 2, name: "General", description: "Default channel", team: null, messages: []}]
+description: null
+domains: null
+id: 2
+name: "Founder Level"
+uniqueId: "541478492613351"
+users: []
+     */
+    case class AppUser(id: Long, username: String, firstName: String = "", lastName: String = "", email: String, teams: JsValue)
+
+    case class Team(id: Long, description: Option[String], name: String, uniqueId: String/*, users: List[AppUser]*/)
 
     implicit val jsonAppUser = Json.format[AppUser]
+    implicit val jsonTeam = Json.format[Team]
 
   }
 

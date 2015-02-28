@@ -12,7 +12,8 @@ import akka.actor.Props
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class ChannelActor extends Actor with ActorLogging {
+class ChannelActor(channelId: String) extends Actor with ActorLogging {
+  //  println("CHANNEL CREATED ID "+ channelId)
   var onlineUsers = Map[ActorRef, String]()
 
   var posts = List[Message]()
@@ -40,7 +41,9 @@ class ChannelActor extends Actor with ActorLogging {
       //send last 300 message for each channel to the new User
       //todo send only users subscribed channels
       sender ! Message("_replyingChannelHistory_STARTED", "mark")
-      (posts groupBy (_.channel) flatMap (_._2 take 300) toList).reverse foreach (sender ! _)
+
+      (posts take 300).reverse foreach (sender ! _)
+
       sender ! Message("_replyingChannelHistory_FINISHED", "mark")
 
       //      sender ! Message("Cowboy Bebop (BOT)", "Gotta Knock a Little Harder!")
@@ -76,24 +79,32 @@ class ChannelActor extends Actor with ActorLogging {
 
   }
 
-  /**
-   * Every 30 seconds broadcast number of online users
-   */
   override def preStart() = {
-    context.system.scheduler.schedule(3 seconds, 60 seconds, self, BroadcastStatus)
+
+    /**
+     * Every 30 seconds broadcast number of online users, just for default channel
+     */
+    if (channelId == "") context.system.scheduler.schedule(3 seconds, 60 seconds, self, BroadcastStatus)
   }
 
-  ChannelActor()
+  //ChannelActor("_general")
 
 }
 
 
 object ChannelActor {
-  lazy val channel = Akka.system().actorOf(Props[ChannelActor])
-  lazy val generalChannel = Akka.system().actorOf(Props[ChannelActor])
-  lazy val generalChannel2 = Akka.system().actorOf(Props[ChannelActor])
+  lazy val defaultChannel = Akka.system().actorOf(Props(new ChannelActor("")))
 
-  def apply() = channel
+  var allChannels = Map[String, ActorRef]()
+
+  def apply(channelId: String): ActorRef = allChannels.getOrElse(channelId, {
+    val newChannel = Akka.system().actorOf(Props(new ChannelActor(channelId)))
+    allChannels += channelId -> newChannel
+    newChannel
+  })
+
+  def apply(channelIds: Seq[String]): Seq[ActorRef] = channelIds map apply
+
 }
 
 case class Message(uid: String, s: String, channel: String = "", ts: Long = System.currentTimeMillis)

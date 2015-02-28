@@ -3,7 +3,10 @@
 # ~~~~
 
 # Home page
-GET        /                          controllers.Application.escapedFragment()
+GET        /                          controllers.Application.index()
+
+#GET        /                          controllers.Application.escapedFragment()
+
 GET        /render/Channel/:id        controllers.Application.renderChannel(id:String)
 
 GET        /ws                        controllers.Application.ws(token:String)
