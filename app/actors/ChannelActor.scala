@@ -6,16 +6,21 @@ import akka.actor.ActorLogging
 import akka.event.LoggingReceive
 import akka.actor.ActorRef
 import akka.actor.Terminated
+import play.api.libs.ws.{WSResponse, WS}
 import play.libs.Akka
 import akka.actor.Props
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.Random
 
 class ChannelActor(channelId: String) extends Actor with ActorLogging {
   //  println("CHANNEL CREATED ID "+ channelId)
   var onlineUsers = Map[ActorRef, String]()
 
   var posts = List[Message]()
+
+  var lastPersistTime: Long = 0
+  val numberOfMessagesWeShouldKeep = 1000
 
   def receive = LoggingReceive {
     /**
@@ -75,6 +80,30 @@ class ChannelActor(channelId: String) extends Actor with ActorLogging {
       }
     }
 
+    case PersistMessages =>
+      val persistPeriod = 1000 * 60 * 10
+      val persistEveryNMessages = 1000
+
+      val now = System.currentTimeMillis
+      val diffTime = now - lastPersistTime
+
+      val isTimeToPersist = (diffTime / persistPeriod) > 0
+
+      if (isTimeToPersist) {
+        val notPersistedMessages = posts.filter(_.ts > lastPersistTime)
+
+        // send messages to backend api
+        //todo do not use toLong, refactor channelId from String to Long
+        backendApi.persistMessages(notPersistedMessages,channelId.toLong)
+
+        //todo only update time after backend returns success. otherwise on error we will lose some messages
+
+        //update time
+        lastPersistTime = notPersistedMessages.head.ts
+
+        //remove old messages so we will not run out of memory
+        posts = posts.take(numberOfMessagesWeShouldKeep)
+      }
 
   }
 
@@ -84,9 +113,15 @@ class ChannelActor(channelId: String) extends Actor with ActorLogging {
      * Every 30 seconds broadcast number of online users, just for default channel
      */
     if (channelId == "") context.system.scheduler.schedule(3 seconds, 60 seconds, self, BroadcastStatus)
+
+
+    //max 2 minutes, so each channel will start persistence at different time from each other.
+    val initialDelayForPersistence = (Random nextInt 120) seconds
+
+    //try persisting the history
+    if (channelId != "") context.system.scheduler.schedule(initialDelayForPersistence, 60 seconds, self, PersistMessages)
   }
 
-  //ChannelActor("_general")
 
 }
 
@@ -106,7 +141,7 @@ object ChannelActor {
 
 }
 
-case class Message(uid: String, s: String, channel: String = "", ts: Long = System.currentTimeMillis)
+case class Message(uid: String, txt: String, channel: String = "", ts: Long = System.currentTimeMillis)
 
 case class StatusUserTyping(uid: String, isTyping: Boolean, channel: String = "")
 
@@ -116,4 +151,40 @@ case class Subscribe(uid: String)
 
 object BroadcastStatus
 
+object PersistMessages
+
 object Ping
+
+
+object backendApi {
+
+  def persistMessages(messages: Seq[Message]) = {
+    //    http://app.ganghq.com/api/saveMessages
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+
+    val url = "http://app.ganghq.com/api/saveMessages"
+
+
+    val ws = WS.url(url)
+
+    (ws post()) map { (x: WSResponse) =>
+      import protocol.jsonAppUser
+      //      println(x.json)
+      val result = x.json
+      (result \ "appUser").validate[AppUser](jsonAppUser).get
+    }
+
+  }
+
+}
+
+
+
+
+
+
+
+
+
+
