@@ -17,7 +17,7 @@ import scala.util.Random
 
 class ChannelActor(channelId: Long) extends Actor with ActorLogging {
 
-  var onlineUsers = Map[ActorRef, String]()
+  var onlineUsers = Map[ActorRef, Long]()
 
   var posts = List[Message]()
 
@@ -74,7 +74,7 @@ class ChannelActor(channelId: Long) extends Actor with ActorLogging {
       //send status to every online user
       onlineUsers.keys foreach (_ ! Message(todo_ids._userStatusChanged_ONLINE, uid.toString))
       //send every other online users status to sender
-      onlineUsers.values.filterNot(_ == uid) foreach (sender ! Message(todo_ids._userStatusChanged_ONLINE, _))
+      onlineUsers.values.filterNot(_ == uid) foreach (userId => sender ! Message(todo_ids._userStatusChanged_ONLINE, userId.toString))
 
 
     /**
@@ -94,16 +94,24 @@ class ChannelActor(channelId: Long) extends Actor with ActorLogging {
       val userIsOffline = !onlineUsers.values.exists(_ == uid)
 
       if (userIsOffline) {
-        onlineUsers foreach { case (userActor, _) => userActor ! Message(todo_ids._userStatusChanged_OFFLINE, uid)}
+        onlineUsers foreach { case (userActor, _) => userActor ! Message(todo_ids._userStatusChanged_OFFLINE, uid.toString)}
       }
     }
 
     case PersistMessages =>
-      val persistPeriod = 1000 * 60 * 2 //2 minutes //todo should be 10 ?
-    val persistEveryNMessages = 1000
+
+      //2 minutes //todo should be 10 ?
+      val persistPeriod = 1000 * 60 * 2
+      val persistEveryNMessages = 1000
 
       val now = System.currentTimeMillis
-      val diffTime = now - lastPersistTime
+
+      // scheduler may start the job few seconds delayed: so we are adding 10 seconds otherwise job will start at next Tick!
+      // (ps: that would not be so serious problem for this use case)
+      val ten_Seconds = 10000
+      val diffTime = now - lastPersistTime + ten_Seconds
+
+      println(s"sec:${diffTime.toLong / 1000L}, channel:$channelId")
 
       val isTimeToPersist = (diffTime / persistPeriod) > 0
 
@@ -112,17 +120,22 @@ class ChannelActor(channelId: Long) extends Actor with ActorLogging {
 
         // send messages to backend api
         //todo do not use toLong, refactor channelId from String to Long
-        backendApi.persistMessages(notPersistedMessages)
+        if (notPersistedMessages.size > 0) {
+          backendApi.persistMessages(notPersistedMessages)
+
+          //remove old messages so we will not run out of memory
+          posts = posts.take(numberOfMessagesWeShouldKeep)
+
+          //todo just for remote debug delete me
+          onlineUsers.keys foreach (_ ! Message(todo_ids._PERSISTED, s"posts.size: ${posts.size}, channelid: $channelId, lastPersistTime: $lastPersistTime"))
+        }
+
 
         //todo only update time after backend returns success. otherwise on error we will lose some messages
 
         //update time
-        lastPersistTime = notPersistedMessages.head.ts
+        lastPersistTime = notPersistedMessages.headOption.map(_.ts) getOrElse now
 
-        //remove old messages so we will not run out of memory
-        posts = posts.take(numberOfMessagesWeShouldKeep)
-
-        onlineUsers.keys foreach (_ ! Message(todo_ids._PERSISTED, s"posts.size: ${posts.size}, lastPersistTime: $lastPersistTime"))
       }
 
   }
@@ -183,7 +196,7 @@ object backendApi {
   def persistMessages(messages: Seq[Message]) = {
     //    http://app.ganghq.com/api/saveMessages
     import scala.concurrent.ExecutionContext.Implicits.global
-
+    import play.api.Play.current
 
     val url = "http://app.ganghq.com/api/saveMessages"
 
