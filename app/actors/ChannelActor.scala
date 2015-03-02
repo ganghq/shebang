@@ -111,7 +111,7 @@ class ChannelActor(channelId: Long) extends Actor with ActorLogging {
       val ten_Seconds = 10000
       val diffTime = now - lastPersistTime + ten_Seconds
 
-      println(s"sec:${diffTime.toLong / 1000L}, channel:$channelId")
+//      println(s"sec:${diffTime.toLong / 1000L}, channel:$channelId")
 
       val isTimeToPersist = (diffTime / persistPeriod) > 0
 

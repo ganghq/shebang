@@ -40,7 +40,7 @@ app.factory('chatApi', function ($websocket) {
      * @param channel
      */
     function send(message, channel) {
-        var data = JSON.stringify({msg: message, channel: channel});
+        var data = JSON.stringify({msg: message, channel: channel, type:"message"});
 
         if (conf.debug && window.console) {
             console.log("message send: ", data);
@@ -65,7 +65,7 @@ app.controller('MainCtrl', function ($scope, chatApi) {
     function send(message) {
 
         //do send
-        chatApi.send(message, "#test");
+        chatApi.send(message, -1);
 
         clearFocus()
     }
