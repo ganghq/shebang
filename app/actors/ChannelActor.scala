@@ -132,14 +132,14 @@ class ChannelActor(channelId: Long) extends Actor with ActorLogging {
     /**
      * Every 30 seconds broadcast number of online users, just for default channel
      */
-    if (channelId == "") context.system.scheduler.schedule(3 seconds, 60 seconds, self, BroadcastStatus)
+    if (channelId == ChannelActor.TODO_DEFAULT_CHANNEL_ID) context.system.scheduler.schedule(3 seconds, 60 seconds, self, BroadcastStatus)
 
 
     //max 2 minutes, so each channel will start persistence at different time from each other.
     val initialDelayForPersistence = (Random nextInt 120) seconds
 
     //try persisting the history
-    if (channelId != "") context.system.scheduler.schedule(initialDelayForPersistence, 60 seconds, self, PersistMessages)
+    if (channelId != ChannelActor.TODO_DEFAULT_CHANNEL_ID) context.system.scheduler.schedule(initialDelayForPersistence, 60 seconds, self, PersistMessages)
   }
 
 
