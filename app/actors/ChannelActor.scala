@@ -111,7 +111,7 @@ class ChannelActor(channelId: Long) extends Actor with ActorLogging {
       val ten_Seconds = 10000
       val diffTime = now - lastPersistTime + ten_Seconds
 
-//      println(s"sec:${diffTime.toLong / 1000L}, channel:$channelId")
+      //      println(s"sec:${diffTime.toLong / 1000L}, channel:$channelId")
 
       val isTimeToPersist = (diffTime / persistPeriod) > 0
 
@@ -192,6 +192,7 @@ object Ping
 
 
 object backendApi {
+  implicit val toJsonMessage = Json.format[Message]
 
   def persistMessages(messages: Seq[Message]) = {
     //    http://app.ganghq.com/api/saveMessages
@@ -203,14 +204,11 @@ object backendApi {
 
     val ws = WS.url(url)
 
-
-    val data = """
-                 |[{"uid"=1,"channel":1,"ts":1425239731133,"txt":"sumnulu_test"},{"uid":2,"channel":2,"ts":1425239731133,"txt":"mesaj iki"}]
-               """.stripMargin
+    val data = messages.map(Json.toJson(_))
 
 
 
-    (ws post (data)) map { (x: WSResponse) =>
+    (ws post data) map { (x: WSResponse) =>
       import protocol.jsonAppUser
       //      println(x.json)
       val result = x.json
