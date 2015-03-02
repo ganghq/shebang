@@ -7,7 +7,7 @@ import akka.event.LoggingReceive
 import akka.actor.ActorRef
 import akka.actor.Terminated
 import controllers.backApi.protocol
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsArray, Format, JsValue, Json}
 import play.api.libs.ws.{WSResponse, WS}
 import play.libs.Akka
 import akka.actor.Props
@@ -192,7 +192,7 @@ object Ping
 
 
 object backendApi {
-  implicit val toJsonMessage = Json.format[Message]
+  implicit val toJsonMessage: Format[Message] = Json.format[Message]
 
   def persistMessages(messages: Seq[Message]) = {
     //    http://app.ganghq.com/api/saveMessages
@@ -204,7 +204,9 @@ object backendApi {
 
     val ws = WS.url(url)
 
-    val data = messages.map(Json.toJson(_))
+    val _data: Seq[JsValue] = messages.map(Json.toJson(_))
+    val data = JsArray(_data).toString()
+
 
 
 
