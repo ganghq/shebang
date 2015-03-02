@@ -9,7 +9,7 @@ import akka.actor.Props
 import scala.concurrent.duration._
 
 
-class UserActor(uid: String, channels: Map[String, ActorRef], out: ActorRef) extends Actor with ActorLogging {
+class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends Actor with ActorLogging {
 
   /**
    * for a small performance gain
@@ -38,7 +38,7 @@ class UserActor(uid: String, channels: Map[String, ActorRef], out: ActorRef) ext
      */
     case js: JsValue =>
       (js \ "type").validate[String] foreach { msg_type =>
-        (js \ "channel").validate[String] foreach { channelId =>
+        (js \ "channel").validate[Long] foreach { channelId =>
           msg_type match {
             case "message" =>
               (js \ "msg").validate[String] foreach { message =>
@@ -79,11 +79,11 @@ class UserActor(uid: String, channels: Map[String, ActorRef], out: ActorRef) ext
 }
 
 object UserActor {
-  def props(uid: String, channelIds: Seq[Long])(out: ActorRef) = {
-    val channels = (channelIds map (id => (id.toString, ChannelActor(id toString)))).toMap
+  def props(uid: Long, channelIds: Seq[Long])(out: ActorRef) = {
+    val channels: Map[Long, ActorRef] = (channelIds map (id => (id, ChannelActor(id)))).toMap
 
-    //used by broadcast messages (workaround maybe buggy)
-    val channelsWithDefault = channels + ("" -> ChannelActor.defaultChannel)
+    //used by broadcast messages (this workaround maybe buggy)
+    val channelsWithDefault = channels + (ChannelActor.TODO_DEFAULT_CHANNEL_ID -> ChannelActor.defaultChannel)
 
     Props(new UserActor(uid, channelsWithDefault, out))
   }

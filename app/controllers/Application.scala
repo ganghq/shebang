@@ -42,7 +42,9 @@ object Application extends Controller {
       val channels: Seq[Long] = (appUser.teams \\ "team").map(_.validate[Team](jsonTeam).asOpt).filter(_.isDefined).map(_.get.id)
       println("teams = " + channels)
 
-      val uid: String = appUser.username
+      //todo do not convert/parse, send actually long insteadof string
+      val uid: Long = appUser.username.toLong
+
       Right(UserActor.props(uid, channels) _)
     }.recover {
       case error =>
