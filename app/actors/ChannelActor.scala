@@ -209,8 +209,6 @@ object backendApi {
 
 
     (ws post data) map { (x: WSResponse) =>
-      import protocol.jsonAppUser
-      //      println(x.json)
       val result = x.json
       val maybeSuccess = (result \ "message").validate[String].asOpt.map(_ == "OK")
       maybeSuccess
