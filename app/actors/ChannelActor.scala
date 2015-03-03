@@ -262,10 +262,9 @@ object backendApi {
 
     val result = x.json
 
-    //  println(result)
-
     val jMessageSeq: Seq[JsValue] = (result \ "messageList").validate[JsArray].asOpt.getOrElse(new JsArray).value
 
+    //todo do validation, not safe!
     jMessageSeq.map { js =>
 
       val ts: Long = (js \ "date").as[Long]
