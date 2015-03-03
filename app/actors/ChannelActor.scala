@@ -1,21 +1,19 @@
 package actors
 
 
-import akka.actor.Actor
-import akka.actor.ActorLogging
+import akka.actor._
 import akka.event.LoggingReceive
-import akka.actor.ActorRef
-import akka.actor.Terminated
 import controllers.backApi.protocol
-import play.api.libs.json.{JsArray, Format, JsValue, Json}
-import play.api.libs.ws.{WSResponse, WS}
+import play.api.libs.json._
+import play.api.libs.ws.{WSRequestHolder, WSResponse, WS}
 import play.libs.Akka
-import akka.actor.Props
+import scala.collection.immutable
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
 
-class ChannelActor(channelId: Long) extends Actor with ActorLogging {
+class ChannelActor(channelId: Long) extends Actor with Stash with ActorLogging {
 
   var onlineUsers = Map[ActorRef, Long]()
 
@@ -41,6 +39,18 @@ class ChannelActor(channelId: Long) extends Actor with ActorLogging {
   }
 
   def receive = LoggingReceive {
+
+    case MessagesReceivedFromBackend => unstashAll()
+                                        context become stateReady
+
+    //todo are there any special messages that should be handled immediately?
+    case _                           => stash()
+  }
+
+  /**
+   * Start accepting messages history fetched
+   */
+  val stateReady = LoggingReceive {
     /**
      * Send this message to the each user which registered to this channel
      */
@@ -153,6 +163,23 @@ class ChannelActor(channelId: Long) extends Actor with ActorLogging {
 
     //try persisting the history
     if (channelId != ChannelActor.TODO_DEFAULT_CHANNEL_ID) context.system.scheduler.schedule(initialDelayForPersistence, 60 seconds, self, PersistMessages)
+
+    //fetch history!
+    val futureMessages = backendApi.readMessages(channelId, System.currentTimeMillis)
+    futureMessages.foreach { ms =>
+
+      val groupedByTS = ms.groupBy(x => x.ts)
+
+      val uniqueMessages = groupedByTS.values.map { (m: Seq[Message]) =>
+        //todo report error if more than one. I.E. Time stamp must be unique per channel
+        assert(m.size == 1)
+        m.head
+      }
+
+      posts ++= uniqueMessages
+
+      self ! MessagesReceivedFromBackend
+    }
   }
 
 
@@ -190,27 +217,34 @@ object PersistMessages
 
 object Ping
 
+object MessagesReceivedFromBackend
+
 
 object backendApi {
   implicit val toJsonMessage: Format[Message] = Json.format[Message]
 
+  import scala.concurrent.ExecutionContext.Implicits.global
+  import play.api.Play.current
+
+  val SaveMessagesUrl = "http://app.ganghq.com/api/saveMessages"
+  val GetMessagesUrl = "http://app.ganghq.com/api/getMessages"
+
+  object timeouts {
+    //10 seconds
+    val defaultTimeout = 1000 * 10
+
+    val readMessagesTimeout = defaultTimeout
+    val writeMessagesTimeout = defaultTimeout
+  }
+
+
   def persistMessages(messages: Seq[Message]) = {
-    //    http://app.ganghq.com/api/saveMessages
-    import scala.concurrent.ExecutionContext.Implicits.global
-    import play.api.Play.current
+    val data = JsArray(messages map (Json.toJson(_))) toString
 
-    val url = "http://app.ganghq.com/api/saveMessages"
-
-
-    val ws = WS.url(url)
-
-    val _data: Seq[JsValue] = messages.map(Json.toJson(_))
-    val data = JsArray(_data).toString()
-
-
-
-
-    (ws post data) map { (x: WSResponse) =>
+    (WS
+      url SaveMessagesUrl
+      withRequestTimeout timeouts.writeMessagesTimeout
+      post data) map { (x: WSResponse) =>
       val result = x.json
       val maybeSuccess = (result \ "message").validate[String].asOpt.map(_ == "OK")
       maybeSuccess
@@ -218,7 +252,40 @@ object backendApi {
 
   }
 
+
+  def readMessages(channelId: Long, date: Long): Future[Seq[Message]] = (WS
+    url GetMessagesUrl
+    withQueryString("channelId" -> channelId.toString, "date" -> date.toString)
+    withRequestTimeout timeouts.readMessagesTimeout
+    get) map { (x: WSResponse) =>
+
+    val result = x.json
+
+    //  println(result)
+
+    val jMessageSeq: Seq[JsValue] = (result \ "messageList").validate[JsArray].asOpt.getOrElse(new JsArray).value
+
+    jMessageSeq.map { js =>
+
+      val ts: Long = (js \ "date").as[Long]
+      val uid: Long = (js \ "sender" \ "id").as[Long]
+      val channelId: Long = (js \ "channel" \ "id").as[Long]
+      val txt: String = (js \ "message").as[String]
+
+      Message(uid, txt, channelId, ts)
+    }
+  }
+
+
 }
+
+/*
+
+ */
+
+
+
+
 
 
 
