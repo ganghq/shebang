@@ -41,10 +41,10 @@ class ChannelActor(channelId: Long) extends Actor with Stash with ActorLogging {
   def receive = LoggingReceive {
 
     case MessagesReceivedFromBackend => unstashAll()
-                                        context become stateReady
+      context become stateReady
 
     //todo are there any special messages that should be handled immediately?
-    case _                           => stash()
+    case _ => stash()
   }
 
   /**
@@ -168,7 +168,8 @@ class ChannelActor(channelId: Long) extends Actor with Stash with ActorLogging {
     val futureMessages = backendApi.readMessages(channelId, System.currentTimeMillis)
     futureMessages.foreach { ms =>
 
-      val groupedByTS = ms.groupBy(x => x.ts)
+      //we are sorting in case they are not! But should be!
+      val groupedByTS = ms sortBy (-_.ts) groupBy (x => x.ts)
 
       val uniqueMessages = groupedByTS.values.map { (m: Seq[Message]) =>
         //todo report error if more than one. I.E. Time stamp must be unique per channel
