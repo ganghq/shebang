@@ -1,12 +1,10 @@
 package actors
 
-import akka.actor.Actor
-import akka.actor.ActorLogging
+import actors.UserActor.RateLimitReached
+import akka.actor._
 import akka.dispatch.sysmsg.Terminate
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
-import akka.actor.ActorRef
-import akka.actor.Props
 import utils.RateLimit
 import scala.concurrent.duration._
 
@@ -22,6 +20,16 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
    * at most 10 call per 10 seconds allowed
    */
   val messageRateLimit = new RateLimit(10, 10)
+
+  val preShutdownState = {
+    case RateLimitReached =>
+      val js = Json.obj("type" -> "error", "code" -> s"rate_limit", "msg" -> s"RATE LIMIT EXCEEDED! DIE ${messageRateLimit.getRate}.", "ts" -> System.currentTimeMillis)
+      out ! js
+      context stop self
+
+    case _ => //catch all messages and do nothing
+
+  }
 
   def receive = {
 
@@ -56,9 +64,8 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
                   if (message.size > 0 && message.size < 2000) channels get channelId foreach (_ ! Message(uid, message, channelId))
                 } else {
                   //rate limit exceeded! Terminate self connection. i.e. kill websocket connection
-                  //todo send message to the client that they should behave nice.
-                  println(s"RATE LIMIT EXCEEDED! DIE $uid.")
-                  context stop self
+
+                  context become preShutdownState
                 }
               }
             case "cmd_usr_typing" =>
@@ -105,5 +112,6 @@ object UserActor {
     Props(new UserActor(uid, channelsWithDefault, out))
   }
 
+  object RateLimitReached
 
 }
