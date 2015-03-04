@@ -53,7 +53,8 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
                 //todo add rate limit filter, and kill the connection on bad behavior
                 //todo do not use System.currentTimeMillis. ts should be unique for the channel.
                 if (messageRateLimit.tickAndCheck) {
-                  if (message.size > 0) channels get channelId foreach (_ ! Message(uid, message, channelId))
+                  //todo send error message to the client if message size exceeds upper bound!
+                  if (message.size > 0 && message.size < 2000) channels get channelId foreach (_ ! Message(uid, message, channelId))
                 } else {
                   //rate limit exceeded! Terminate self connection. i.e. kill websocket connection
                   //todo send message to the client that they should behave nice.
