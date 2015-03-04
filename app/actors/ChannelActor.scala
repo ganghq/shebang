@@ -185,13 +185,13 @@ class ChannelActor(channelId: Long) extends Actor with Stash with ActorLogging {
       futureMessages.foreach { ms =>
 
         //we are sorting in case they are not! But should be!
-        val groupedByTS = ms sortBy (-_.ts) groupBy (x => x.ts)
+        val groupedByTS = ms groupBy (x => x.ts)
 
-        val uniqueMessages = groupedByTS.values.map { (m: Seq[Message]) =>
+        val uniqueMessages = (groupedByTS.values map { (m: Seq[Message]) =>
           //todo report error if more than one. I.E. Time stamp must be unique per channel
           assert(m.size == 1)
           m.head
-        }
+        }).toList sortBy (-_.ts)
 
         posts ++= uniqueMessages
 
