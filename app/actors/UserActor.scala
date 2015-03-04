@@ -19,7 +19,7 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
   lazy val _channelsActrs = channels.values.toSet
 
   /**
-   * at most 20 call per 30 seconds allowed
+   * at most 10 call per 10 seconds allowed
    */
   val messageRateLimit = new RateLimit(10, 10)
 
@@ -39,7 +39,6 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
 
     /**
      * from client
-     * todo send to specific channel, not all of them
      * todo filter only allowed html/xml tags i.e. <b>, <img>, etc.
      */
     case js: JsValue =>

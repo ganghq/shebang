@@ -121,6 +121,7 @@ class ChannelActor(channelId: Long) extends Actor with Stash with ActorLogging {
       if (userIsOffline) {
         onlineUsers foreach { case (userActor, _) => userActor ! Message(todo_ids._userStatusChanged_OFFLINE, uid.toString)}
       }
+
     }
 
     case PersistMessages =>
@@ -144,7 +145,6 @@ class ChannelActor(channelId: Long) extends Actor with Stash with ActorLogging {
         val notPersistedMessages = posts.filter(_.ts > lastPersistTime)
 
         // send messages to backend api
-        //todo do not use toLong, refactor channelId from String to Long
         if (notPersistedMessages.size > 0) {
           backendApi.persistMessages(notPersistedMessages)
 
@@ -204,6 +204,17 @@ class ChannelActor(channelId: Long) extends Actor with Stash with ActorLogging {
     }
   }
 
+  /**
+   * Persist all messages, before termination
+   */
+  override def postStop() = {
+    val now = System.currentTimeMillis
+    val notPersistedMessages = posts.filter(_.ts > lastPersistTime)
+    if (notPersistedMessages.size > 0) {
+      backendApi.persistMessages(notPersistedMessages)
+      lastPersistTime = notPersistedMessages.headOption.map(_.ts) getOrElse now
+    }
+  }
 
 }
 
