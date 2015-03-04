@@ -32,6 +32,10 @@ class RateLimit(n: Int, perSecond: Int) {
 
 }
 
+object RateLimit {
+  def apply(n: Int, perSecond: Int) = new RateLimit(n: Int, perSecond: Int)
+}
+
 
 class RateCounter(forDurationSeconds: Int) {
   private val duration: Long = forDurationSeconds * 1000
