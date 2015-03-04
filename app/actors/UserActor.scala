@@ -11,6 +11,8 @@ import scala.concurrent.duration._
 
 class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends Actor with ActorLogging {
 
+  import scala.concurrent.ExecutionContext.Implicits.global
+
   /**
    * for a small performance gain
    */
@@ -21,13 +23,19 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
    */
   val messageRateLimit = new RateLimit(10, 10)
 
-  val preShutdownState = {
+  val preShutdownState: Receive = {
     case RateLimitReached =>
-      val js = Json.obj("type" -> "error", "code" -> s"rate_limit", "msg" -> s"RATE LIMIT EXCEEDED! DIE ${messageRateLimit.getRate}.", "ts" -> System.currentTimeMillis)
+      println("RATE LIMIT !!!!!!!")
+      val js = Json.obj("type" -> "error", "code" -> s"rate_limit", "msg" -> s"RATE LIMIT EXCEEDED! BACK OFF! ${0.1 * messageRateLimit.getRate}/s", "ts" -> System.currentTimeMillis)
       out ! js
-      context stop self
 
-    case _ => //catch all messages and do nothing
+      //kill after 10 seconds i.e. hell ban for 10 sec
+      context.system.scheduler.scheduleOnce(10 seconds, self, PoisonPill)
+
+    case x =>
+      messageRateLimit.tick
+      println(x)
+    //catch all messages and do nothing
 
   }
 
@@ -64,7 +72,8 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
                   if (message.size > 0 && message.size < 2000) channels get channelId foreach (_ ! Message(uid, message, channelId))
                 } else {
                   //rate limit exceeded! Terminate self connection. i.e. kill websocket connection
-
+                  println("xxxxxxxxxxx")
+                  self ! RateLimitReached
                   context become preShutdownState
                 }
               }
