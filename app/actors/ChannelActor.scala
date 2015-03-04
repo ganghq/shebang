@@ -22,6 +22,18 @@ class ChannelActor(channelId: Long) extends Actor with Stash with ActorLogging {
   var lastPersistTime: Long = 0
   val numberOfMessagesWeShouldKeep = 1000
 
+  /**
+   * To create unique time stamps
+   */
+  var lastMessagesUniqueTimeStamp: Long = _
+
+  def getUniqueTs(thatTS: Long = System currentTimeMillis) = {
+    lastMessagesUniqueTimeStamp = thatTS + (if (lastMessagesUniqueTimeStamp == thatTS) 1 else 0)
+    lastMessagesUniqueTimeStamp
+  }
+
+  def generateUniqueMessage(that: Message) = that.copy(ts = getUniqueTs())
+
 
   object todo_ids {
     val _PERSISTED: Long = -15
@@ -40,7 +52,8 @@ class ChannelActor(channelId: Long) extends Actor with Stash with ActorLogging {
 
   def receive = LoggingReceive {
 
-    case MessagesReceivedFromBackend => unstashAll()
+    case MessagesReceivedFromBackend =>
+      unstashAll()
       context become stateReady
 
     //todo are there any special messages that should be handled immediately?
@@ -55,9 +68,11 @@ class ChannelActor(channelId: Long) extends Actor with Stash with ActorLogging {
      * Send this message to the each user which registered to this channel
      */
     case m: Message =>
-      posts +:= m
+      val persistentMessage: Message = generateUniqueMessage(m)
 
-      onlineUsers.keys foreach (_ ! m)
+      posts +:= persistentMessage
+
+      onlineUsers.keys foreach (_ ! persistentMessage)
 
     case m: StatusUserTyping => onlineUsers.keys foreach (_ ! m)
 
@@ -162,23 +177,29 @@ class ChannelActor(channelId: Long) extends Actor with Stash with ActorLogging {
     val initialDelayForPersistence = (Random nextInt 120) seconds
 
     //try persisting the history
-    if (channelId != ChannelActor.TODO_DEFAULT_CHANNEL_ID) context.system.scheduler.schedule(initialDelayForPersistence, 60 seconds, self, PersistMessages)
+    if (channelId != ChannelActor.TODO_DEFAULT_CHANNEL_ID) {
+      context.system.scheduler.schedule(initialDelayForPersistence, 60 seconds, self, PersistMessages)
 
-    //fetch history!
-    val futureMessages = backendApi.readMessages(channelId, System.currentTimeMillis)
-    futureMessages.foreach { ms =>
+      //fetch history!
+      val futureMessages = backendApi.readMessages(channelId, System.currentTimeMillis)
+      futureMessages.foreach { ms =>
 
-      //we are sorting in case they are not! But should be!
-      val groupedByTS = ms sortBy (-_.ts) groupBy (x => x.ts)
+        //we are sorting in case they are not! But should be!
+        val groupedByTS = ms sortBy (-_.ts) groupBy (x => x.ts)
 
-      val uniqueMessages = groupedByTS.values.map { (m: Seq[Message]) =>
-        //todo report error if more than one. I.E. Time stamp must be unique per channel
-        assert(m.size == 1)
-        m.head
+        val uniqueMessages = groupedByTS.values.map { (m: Seq[Message]) =>
+          //todo report error if more than one. I.E. Time stamp must be unique per channel
+          assert(m.size == 1)
+          m.head
+        }
+
+        posts ++= uniqueMessages
+
+        self ! MessagesReceivedFromBackend
       }
-
-      posts ++= uniqueMessages
-
+    } else {
+      // default channel do not wait the api
+      //todo refactor
       self ! MessagesReceivedFromBackend
     }
   }
