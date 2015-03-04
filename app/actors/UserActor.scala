@@ -2,10 +2,12 @@ package actors
 
 import akka.actor.Actor
 import akka.actor.ActorLogging
+import akka.dispatch.sysmsg.Terminate
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import akka.actor.ActorRef
 import akka.actor.Props
+import utils.RateLimit
 import scala.concurrent.duration._
 
 
@@ -16,6 +18,10 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
    */
   lazy val _channelsActrs = channels.values.toSet
 
+  /**
+   * at most 20 call per 30 seconds allowed
+   */
+  val messageRateLimit = new RateLimit(10, 10)
 
   def receive = {
 
@@ -46,8 +52,14 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
                 //todo move this empty message check to some filters functions
                 //todo add rate limit filter, and kill the connection on bad behavior
                 //todo do not use System.currentTimeMillis. ts should be unique for the channel.
-                if (message.size > 0)
-                  channels get channelId foreach (_ ! Message(uid, message, channelId))
+                if (messageRateLimit.tickAndCheck) {
+                  if (message.size > 0) channels get channelId foreach (_ ! Message(uid, message, channelId))
+                } else {
+                  //rate limit exceeded! Terminate self connection. i.e. kill websocket connection
+                  //todo send message to the client that they should behave nice.
+                  println(s"RATE LIMIT EXCEEDED! DIE $uid.")
+                  context stop self
+                }
               }
             case "cmd_usr_typing" =>
               (js \ "isTyping").validate[Boolean] foreach { isTyping =>
