@@ -42,7 +42,12 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
           msg_type match {
             case "message" =>
               (js \ "msg").validate[String] foreach { message =>
-                channels get channelId foreach (_ ! Message(uid, message, channelId))
+
+                //todo move this empty message check to some filters functions
+                //todo add rate limit filter, and kill the connection on bad behavior
+                //todo do not use System.currentTimeMillis. ts should be unique for the channel.
+                if (message.size > 0)
+                  channels get channelId foreach (_ ! Message(uid, message, channelId))
               }
             case "cmd_usr_typing" =>
               (js \ "isTyping").validate[Boolean] foreach { isTyping =>
