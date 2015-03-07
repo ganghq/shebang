@@ -74,6 +74,46 @@ class ChannelActor(channelId: Long) extends Actor with Stash with ActorLogging {
 
       onlineUsers.keys foreach (_ ! persistentMessage)
 
+    /**
+     * todo Handle api delete and edit. They are not implemented yet
+     * send api modified messages maybe store them some where
+     */
+    case ModifyMessageCommand(m) =>
+      val previousSize = posts.size
+
+      val isUsersOwnPosts: Boolean = onlineUsers get sender contains m.uid
+
+      //todo
+      val admin_id_fix_me = 7L
+
+      lazy val isAdmin = onlineUsers get sender contains admin_id_fix_me
+
+      if (isUsersOwnPosts || isAdmin) {
+        val (_possibleOldMessage, modifiedPosts) = posts.partition(_.ts == m.ts)
+        _possibleOldMessage.headOption foreach { (oldMessage: Message) =>
+
+          // We had requested message for to be edited or to be delete
+
+          // Warning! we are changing UID in case this is an admin action
+          val niceMessage = m.copy(uid = oldMessage.uid)
+
+          if (niceMessage.txt.size > 0) {
+            //message edited
+            posts = (niceMessage +: modifiedPosts) sortBy (-_.ts)
+
+          } else {
+            //message deleted
+            posts = modifiedPosts
+          }
+
+          onlineUsers.keys foreach (_ ! niceMessage)
+        }
+
+      } else {
+        // they do not have access to delete or edit
+      }
+
+
     case m: StatusUserTyping => onlineUsers.keys foreach (_ ! m)
 
     /**
@@ -236,9 +276,13 @@ object ChannelActor {
 
 }
 
+sealed trait Status
+
 case class Message(uid: Long, txt: String, channel: Long = ChannelActor.TODO_DEFAULT_CHANNEL_ID, ts: Long = System.currentTimeMillis)
 
-case class StatusUserTyping(uid: Long, isTyping: Boolean, channel: Long = ChannelActor.TODO_DEFAULT_CHANNEL_ID)
+case class ModifyMessageCommand(m: Message)
+
+case class StatusUserTyping(uid: Long, isTyping: Boolean, channel: Long = ChannelActor.TODO_DEFAULT_CHANNEL_ID) extends Status
 
 case class UserList(users: List[String])
 
@@ -251,6 +295,30 @@ object PersistMessages
 object Ping
 
 object MessagesReceivedFromBackend
+
+
+object ClientApi {
+
+}
+
+/*
+
+  object todo_ids {
+
+    val _PERSISTED: Long = -15
+
+    val _userStatusChanged_OFFLINE: Long = -14
+
+    val _numberOfOnlineUsers: Long = -13
+
+    val _userStatusChanged_ONLINE: Long = -12
+
+    val _replyingChannelHistory_FINISHED: Long = -11
+
+    val _replyingChannelHistory_STARTED: Long = -10
+
+  }
+ */
 
 
 object backendApi {

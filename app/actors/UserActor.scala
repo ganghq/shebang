@@ -69,10 +69,18 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
                 //todo do not use System.currentTimeMillis. ts should be unique for the channel.
                 if (messageRateLimit.tickAndCheck) {
                   //todo send error message to the client if message size exceeds upper bound!
-                  if (message.size > 0 && message.size < 2000) channels get channelId foreach (_ ! Message(uid, message, channelId))
+
+                  (js \ "ts").validate[Long].asOpt.map { ts =>
+                    val command = ModifyMessageCommand(Message(uid, message.stripMargin, channelId, ts))
+                    if (message.stripMargin.size > 0 && message.size < 2000) channels get channelId foreach (_ ! command)
+                  }.getOrElse {
+                    val command = Message(uid, message.stripMargin, channelId)
+                    if (message.stripMargin.size > 0 && message.size < 2000) channels get channelId foreach (_ ! command)
+                  }
+
+
                 } else {
                   //rate limit exceeded! Terminate self connection. i.e. kill websocket connection
-                  println("xxxxxxxxxxx")
                   self ! RateLimitReached
                   context become preShutdownState
                 }
