@@ -5,7 +5,7 @@
 # Home page
 GET        /                          controllers.Application.index()
 
-#GET        /                          controllers.Application.escapedFragment()
+GET        /render/Channel/           controllers.Application.escapedFragment()
 
 GET        /render/Channel/:id        controllers.Application.renderChannel(id:String)
 

@@ -65,7 +65,13 @@ object Application extends Controller {
       Ok(views.html.renderedChannel(channelid))
     }.getOrElse {
 
-      Ok(views.html.renderedChannel("000000"))
+      BadRequest(s"""
+        <html>
+          <body>
+            GANG: Bad request with params ${request.rawQueryString}
+          </body>
+        </html>
+        """)
 
     }
   }
