@@ -71,11 +71,15 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
                   //todo send error message to the client if message size exceeds upper bound!
 
                   (js \ "ts").validate[Long].asOpt.map { ts =>
+
                     val command = ModifyMessageCommand(Message(uid, message.stripMargin, channelId, ts))
-                    if (message.stripMargin.size > 0 && message.size < 2000) channels get channelId foreach (_ ! command)
+                    if (message.size < 2000) channels get channelId foreach (_ ! command)
+
                   }.getOrElse {
+
                     val command = Message(uid, message.stripMargin, channelId)
                     if (message.stripMargin.size > 0 && message.size < 2000) channels get channelId foreach (_ ! command)
+
                   }
 
 
