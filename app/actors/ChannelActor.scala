@@ -185,7 +185,7 @@ class ChannelActor(channelId: Long) extends Actor with Stash with ActorLogging {
         val notPersistedMessages = posts.filter(_.ts > lastPersistTime)
 
         // send messages to backend api
-        if (notPersistedMessages.size > 0) {
+        if (notPersistedMessages.size > 0 && channelId > 0) {
           backendApi.persistMessages(notPersistedMessages)
 
           //remove old messages so we will not run out of memory
@@ -248,9 +248,10 @@ class ChannelActor(channelId: Long) extends Actor with Stash with ActorLogging {
    * Persist all messages, before termination
    */
   override def postStop() = {
+    println(s"Terminating channel! ID:$channelId")
     val now = System.currentTimeMillis
     val notPersistedMessages = posts.filter(_.ts > lastPersistTime)
-    if (notPersistedMessages.size > 0) {
+    if (notPersistedMessages.size > 0 && channelId > 0) {
       backendApi.persistMessages(notPersistedMessages)
       lastPersistTime = notPersistedMessages.headOption.map(_.ts) getOrElse now
     }

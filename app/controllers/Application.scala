@@ -16,6 +16,7 @@ import scala.concurrent.Future
 import scala.util.Random
 
 object Application extends Controller {
+  val debugMode = false
 
   def index = Action { implicit request =>
     val uid: String = request.session.get("uid").getOrElse {
@@ -27,7 +28,10 @@ object Application extends Controller {
 
     val session = (request.session + ("uid" -> uid)) + ("username" -> Random.nextInt().toString)
 
-    Ok(result).withSession(session)
+
+    if (debugMode) Ok(result).withSession(session) else Redirect("http://ganghq.com")
+
+
   }
 
 
@@ -65,7 +69,7 @@ object Application extends Controller {
       Ok(views.html.renderedChannel(channelid))
     }.getOrElse {
 
-      BadRequest(s"""
+      BadRequest( s"""
         <html>
           <body>
             GANG: Bad request with params ${request.rawQueryString}
@@ -114,7 +118,7 @@ users: []
      */
     case class AppUser(id: Long, username: String, firstName: String = "", lastName: String = "", email: String, teams: JsValue)
 
-    case class Team(id: Long, description: Option[String], name: String, uniqueId: String/*, users: List[AppUser]*/)
+    case class Team(id: Long, description: Option[String], name: String, uniqueId: String /*, users: List[AppUser]*/)
 
     implicit val jsonAppUser = Json.format[AppUser]
     implicit val jsonTeam = Json.format[Team]
