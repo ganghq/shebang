@@ -1,6 +1,6 @@
 package actors
 
-import actors.UserActor.RateLimitReached
+import actors.UserActor.{PingTimeOut, RateLimitReached}
 import akka.actor._
 import akka.dispatch.sysmsg.Terminate
 import play.api.libs.json.JsValue
@@ -54,6 +54,10 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
       val js = Json.obj("type" -> "cmd_usr_typing", "uid" -> _uid, "isTyping" -> t, "channel" -> c)
       out ! js
 
+    case PingTimeOut =>
+      out ! Json.obj("type" -> "error", "code" -> s"ping_time_out", "msg" -> "Sorry you must ping me !", "ts" -> System.currentTimeMillis)
+
+      self ! PoisonPill
 
     /**
      * from client
@@ -136,7 +140,7 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
     context.system.scheduler.schedule(30 seconds, 45 seconds, self, Ping)
   }
 
-  def createPingPongPoisonPillSchedule = context.system.scheduler.scheduleOnce(60 seconds, self, PoisonPill)
+  def createPingPongPoisonPillSchedule = context.system.scheduler.scheduleOnce(60 seconds, self, PingTimeOut)
 
 
 }
@@ -152,5 +156,7 @@ object UserActor {
   }
 
   object RateLimitReached
+
+  object PingTimeOut
 
 }
