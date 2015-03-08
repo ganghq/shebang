@@ -18,6 +18,8 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
    */
   lazy val _channelsActrs = channels.values.toSet
 
+  var pingPongPoisonPill = createPingPongPoisonPillSchedule
+
   /**
    * at most 10 call per 10 seconds allowed
    */
@@ -96,6 +98,14 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
               (js \ "isTyping").validate[Boolean] foreach { isTyping =>
                 channels get channelId foreach (_ ! StatusUserTyping(uid, isTyping, channelId))
               }
+
+            case "ping" =>
+              out ! Json.obj("type" -> "pong", "ts" -> System.currentTimeMillis, "observedRate" -> "${0.1 * messageRateLimit.getRate}/s")
+              pingPongPoisonPill.cancel()
+              pingPongPoisonPill = createPingPongPoisonPillSchedule
+
+
+
             case other =>
               log.error("unknown message type do nothing!: " + js.toString)
           }
@@ -113,7 +123,7 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
   }
 
   override def preStart() = {
-    import scala.concurrent.ExecutionContext.Implicits.global
+
 
     _channelsActrs.foreach(_ ! Subscribe(uid))
 
@@ -122,6 +132,8 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
      */
     context.system.scheduler.schedule(30 seconds, 45 seconds, self, Ping)
   }
+
+  def createPingPongPoisonPillSchedule = context.system.scheduler.scheduleOnce(60 seconds, self, PoisonPill)
 
 
 }
