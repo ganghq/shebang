@@ -64,7 +64,7 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
         msg_type match {
 
           case "ping" =>
-            out ! Json.obj("type" -> "pong", "ts" -> System.currentTimeMillis, "observedRate" -> "${0.1 * messageRateLimit.getRate}/s")
+            out ! Json.obj("type" -> "pong", "ts" -> System.currentTimeMillis, "observedRate" -> s"${0.1 * messageRateLimit.getRate}/s")
             pingPongPoisonPill.cancel()
             pingPongPoisonPill = createPingPongPoisonPillSchedule
 
