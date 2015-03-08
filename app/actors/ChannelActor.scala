@@ -166,8 +166,8 @@ class ChannelActor(channelId: Long) extends Actor with Stash with ActorLogging {
 
     case PersistMessages =>
 
-      //2 minutes //todo should be 10 ?
-      val persistPeriod = 1000 * 60 * 2
+      //10 minutes
+      val persistPeriod = 1000 * 60 * 10
       val persistEveryNMessages = 1000
 
       val now = System.currentTimeMillis
