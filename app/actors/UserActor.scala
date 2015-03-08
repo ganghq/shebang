@@ -73,6 +73,7 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
             pingPongPoisonPill.cancel()
             pingPongPoisonPill = createPingPongPoisonPillSchedule
           case _ =>
+            //do nothing
         }
 
         (js \ "channel").validate[Long] foreach { channelId =>
