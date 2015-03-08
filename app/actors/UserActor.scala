@@ -64,6 +64,7 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
      * todo filter only allowed html/xml tags i.e. <b>, <img>, etc.
      */
     case js: JsValue =>
+
       (js \ "type").validate[String] foreach { msg_type =>
         msg_type match {
 
@@ -71,7 +72,7 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
             out ! Json.obj("type" -> "pong", "ts" -> System.currentTimeMillis, "observedRate" -> s"${0.1 * messageRateLimit.getRate}/s")
             pingPongPoisonPill.cancel()
             pingPongPoisonPill = createPingPongPoisonPillSchedule
-
+          case _ =>
         }
 
         (js \ "channel").validate[Long] foreach { channelId =>
