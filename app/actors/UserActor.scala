@@ -61,6 +61,15 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
      */
     case js: JsValue =>
       (js \ "type").validate[String] foreach { msg_type =>
+        msg_type match {
+
+          case "ping" =>
+            out ! Json.obj("type" -> "pong", "ts" -> System.currentTimeMillis, "observedRate" -> "${0.1 * messageRateLimit.getRate}/s")
+            pingPongPoisonPill.cancel()
+            pingPongPoisonPill = createPingPongPoisonPillSchedule
+
+        }
+
         (js \ "channel").validate[Long] foreach { channelId =>
           msg_type match {
             case "message" =>
@@ -98,12 +107,6 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
               (js \ "isTyping").validate[Boolean] foreach { isTyping =>
                 channels get channelId foreach (_ ! StatusUserTyping(uid, isTyping, channelId))
               }
-
-            case "ping" =>
-              out ! Json.obj("type" -> "pong", "ts" -> System.currentTimeMillis, "observedRate" -> "${0.1 * messageRateLimit.getRate}/s")
-              pingPongPoisonPill.cancel()
-              pingPongPoisonPill = createPingPongPoisonPillSchedule
-
 
 
             case other =>
