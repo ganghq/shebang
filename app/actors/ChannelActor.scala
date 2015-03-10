@@ -129,7 +129,7 @@ class ChannelActor(channelId: Long) extends Actor with Stash with ActorLogging {
       //todo send only users subscribed channels
       sender ! Message(todo_ids._replyingChannelHistory_STARTED, channelId.toString)
 
-      (posts take 300).reverse foreach (sender ! _)
+      (posts take 70).reverse foreach (sender ! _)
 
       sender ! Message(todo_ids._replyingChannelHistory_FINISHED, channelId.toString)
 
