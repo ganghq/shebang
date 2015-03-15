@@ -1,4 +1,4 @@
-@()(implicit request: RequestHeader)
+@(ips:List[String])(implicit request: RequestHeader)
 
 <!DOCTYPE html>
 <html lang="en" ng-app="shebang" ng-controller="MainCtrl">
@@ -40,6 +40,18 @@
                 <h3>Read.me</h3>
                 <blockquote>
                     <p>UID stored in Session cookie</p>
+                </blockquote>
+            </div>
+
+            <div class="row">
+                <h3>Read.me</h3>
+                <blockquote>
+                <pre>
+
+                    @for(ip <- ips){
+                        @ip,
+                    }
+                </pre>
                 </blockquote>
             </div>
 

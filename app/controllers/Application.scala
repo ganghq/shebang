@@ -16,7 +16,8 @@ import scala.concurrent.Future
 import scala.util.Random
 
 object Application extends Controller {
-  val debugMode = false
+  val debugMode = true
+  var allClients: List[String] = List[String]()
 
   def index = Action { implicit request =>
     val uid: String = request.session.get("uid").getOrElse {
@@ -24,9 +25,10 @@ object Application extends Controller {
     }
     //    Logger.debug("UID: " + uid)
 
-    val result = views.html.main()
+    val result = views.html.main(allClients)
 
     val session = (request.session + ("uid" -> uid)) + ("username" -> Random.nextInt().toString)
+
 
 
     if (debugMode) Ok(result).withSession(session) else Redirect("http://ganghq.com")
@@ -40,7 +42,9 @@ object Application extends Controller {
 
     import scala.concurrent.ExecutionContext.Implicits.global
 
-    println("token = " + token)
+    allClients +:= request.remoteAddress
+    println("ip = " + request.remoteAddress)
+
     backApi.me(token).map { (appUser: AppUser) =>
 
       val channels: Seq[Long] = (appUser.teams \\ "team").map(_.validate[Team](jsonTeam).asOpt).filter(_.isDefined).map(_.get.id)
