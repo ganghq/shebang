@@ -1,7 +1,4 @@
 # shebang
 Scala chat POC
 
-ws.ganghq.com
-
-
-jenkis test1
+http://ganghq.com/#!/8
