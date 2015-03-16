@@ -221,10 +221,7 @@ class ChannelActor(channelId: Long) extends Actor with Stash with ActorLogging {
       context.system.scheduler.schedule(initialDelayForPersistence, 60 seconds, self, PersistMessages)
 
       //fetch history!
-      val oneWeek = 1000 * 60 * 60 * 24 * 7
-      val now = System.currentTimeMillis
-      val oneWeekBeforeNow = now - oneWeek
-      val futureMessages = backendApi.readMessages(channelId, now, oneWeekBeforeNow)
+      val futureMessages = backendApi.readMessages(channelId, System.currentTimeMillis)
       futureMessages.foreach { ms =>
 
         //we are sorting in case they are not! But should be!
@@ -358,14 +355,11 @@ object backendApi {
   }
 
 
-  def readMessages(channelId: Long, endTS: Long, startTS: Long): Future[Seq[Message]] = (WS
+  def readMessages(channelId: Long, date: Long): Future[Seq[Message]] = (WS
     url GetMessagesUrl
-    withQueryString("channelId" -> channelId.toString, "startDate" -> startTS.toString, "endDate" -> endTS.toString)
+    withQueryString("channelId" -> channelId.toString, "date" -> date.toString)
     withRequestTimeout timeouts.readMessagesTimeout
     get) map { (x: WSResponse) =>
-
-
-
 
     val result = x.json
 
