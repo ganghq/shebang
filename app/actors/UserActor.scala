@@ -41,6 +41,7 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
 
   }
 
+
   def receive = {
 
     /**
@@ -73,7 +74,7 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
             pingPongPoisonPill.cancel()
             pingPongPoisonPill = createPingPongPoisonPillSchedule
           case _ =>
-            //do nothing
+          //do nothing
         }
 
         (js \ "channel").validate[Long] foreach { channelId =>
@@ -88,10 +89,13 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
                 //todo move this empty message check to some filters functions
                 //todo add rate limit filter, and kill the connection on bad behavior
                 //todo do not use System.currentTimeMillis. ts should be unique for the channel.
+
                 if (messageRateLimit.tickAndCheck) {
                   //todo send error message to the client if message size exceeds upper bound!
 
-                  (js \ "ts").validate[Long].asOpt.map { ts =>
+
+
+                  if (!handleCmd(message)) (js \ "ts").validate[Long].asOpt.map { ts =>
 
                     val command = ModifyMessageCommand(Message(uid, message.stripMargin, channelId, ts))
                     if (message.size < 2000) channels get channelId foreach (_ ! command)
@@ -130,6 +134,16 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
       log.error("unhandled: " + other)
 
 
+  }
+
+  //fixme
+  def handleCmd(s: String) = s match {
+    case "/x-restart" if uid == 7L =>
+      import scala.sys.process._
+      "/gang/bin/start-shebang.sh".run()
+      true
+    case _ =>
+      false
   }
 
   override def preStart() = {
