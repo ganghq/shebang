@@ -81,8 +81,9 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
             case "message" =>
               (js \ "msg").validate[String] foreach { messageUnEscaped =>
 
-                //escape all xml tags
-                val message = xml.Utility.escape(messageUnEscaped)
+                //todo front end escaping
+                // escape all xml tags
+                val message = messageUnEscaped //xml.Utility.escape(messageUnEscaped)
 
                 //todo move this empty message check to some filters functions
                 //todo add rate limit filter, and kill the connection on bad behavior
