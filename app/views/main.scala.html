@@ -1,4 +1,4 @@
-@(ips:List[String])(implicit request: RequestHeader)
+@()(implicit request: RequestHeader)
 
 <!DOCTYPE html>
 <html lang="en" ng-app="shebang" ng-controller="MainCtrl">
@@ -43,17 +43,7 @@
                 </blockquote>
             </div>
 
-            <div class="row">
-                <h3>Read.me</h3>
-                <blockquote>
-                <pre>
 
-                    @for(ip <- ips){
-                        @ip,
-                    }
-                </pre>
-                </blockquote>
-            </div>
 
             <div class="row">
                 <h3>Conf</h3>

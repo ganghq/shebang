@@ -1,4 +1,4 @@
-@(id:String)(implicit request: RequestHeader)
+@(id:String,canonicalURI:String)(implicit request: RequestHeader)
 
 <!doctype html>
 <html lang="en">
@@ -13,7 +13,7 @@
         <meta property="og:description" content="Just share this channel URL under a FB post or a FB group" />
 
         <meta property="og:image" content="http://cdn.ganghq.com/api/teamimage?id=@id" />
-        <meta property="og:url" content="http://ganghq.com/#!/@id" />
+        <meta property="og:url" content="http://ganghq.com/#!/@canonicalURI" />
 
         <title>GangHQ.com</title>
 

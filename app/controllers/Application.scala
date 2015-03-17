@@ -16,8 +16,7 @@ import scala.concurrent.Future
 import scala.util.Random
 
 object Application extends Controller {
-  val debugMode = true
-  var allClients: List[String] = List[String]()
+  val debugMode = false
 
   def index = Action { implicit request =>
     val uid: String = request.session.get("uid").getOrElse {
@@ -25,7 +24,7 @@ object Application extends Controller {
     }
     //    Logger.debug("UID: " + uid)
 
-    val result = views.html.main(allClients)
+    val result = views.html.main()
 
     val session = (request.session + ("uid" -> uid)) + ("username" -> Random.nextInt().toString)
 
@@ -41,9 +40,6 @@ object Application extends Controller {
     import protocol._
 
     import scala.concurrent.ExecutionContext.Implicits.global
-
-    allClients +:= request.remoteAddress
-    println("ip = " + request.remoteAddress)
 
     backApi.me(token).map { (appUser: AppUser) =>
 
@@ -63,14 +59,15 @@ object Application extends Controller {
 
 
   def renderChannel(id: String) = Action { implicit request =>
-    Ok(views.html.renderedChannel(id))
+    Ok(views.html.renderedChannel(id,id))
   }
 
   def escapedFragment() = Action { implicit request =>
     request.getQueryString("_escaped_fragment_").map { ef =>
-      val channelid = new URI(ef).getPath.substring(1)
+      val canonicalURI = new URI(ef).getPath.substring(1)
+      val channelid = canonicalURI.split("/")(0)
 
-      Ok(views.html.renderedChannel(channelid))
+      Ok(views.html.renderedChannel(channelid,canonicalURI))
     }.getOrElse {
 
       BadRequest( s"""
