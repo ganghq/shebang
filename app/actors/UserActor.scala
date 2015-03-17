@@ -21,6 +21,11 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
   var pingPongPoisonPill = createPingPongPoisonPillSchedule
 
   /**
+   * admin uids
+   */
+  val admins: List[Long] = List(5, 6, 7, 8, 13)
+
+  /**
    * at most 10 call per 10 seconds allowed
    */
   val messageRateLimit = new RateLimit(10, 10)
@@ -48,8 +53,16 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
      * from channel
      */
     case Message(_uid, s, c, ts) if _channelsActrs.contains(sender) =>
-      val js = Json.obj("type" -> "message", "uid" -> _uid, "msg" -> s, "channel" -> c, "ts" -> ts, "self" -> (uid == _uid))
-      out ! js
+      val canEdit = admins.contains(uid) || (uid == _uid)
+      out ! Json.obj(
+      "type" -> "message",
+      "uid" -> _uid,
+      "msg" -> s,
+      "channel" -> c,
+      "ts" -> ts,
+      "self" -> (uid == _uid),
+      "canedit" -> canEdit)
+
 
     case StatusUserTyping(_uid, t, c) if _channelsActrs.contains(sender) && (uid != _uid) => //do not send self typing status about them self
       val js = Json.obj("type" -> "cmd_usr_typing", "uid" -> _uid, "isTyping" -> t, "channel" -> c)
@@ -138,7 +151,7 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
 
   //fixme
   def handleCmd(s: String) = s match {
-    case "/x-restart" if uid == 7L =>
+    case "/x-restart" if admins.contains(uid) =>
       import scala.sys.process._
       "/gang/bin/start-shebang.sh".run()
       true
