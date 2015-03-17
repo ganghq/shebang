@@ -84,9 +84,9 @@ class ChannelActor(channelId: Long) extends Actor with Stash with ActorLogging {
       val isUsersOwnPosts: Boolean = onlineUsers get sender contains m.uid
 
       //todo
-      val admin_id_fix_me = 7L
+      val admins = UserActor.admins
 
-      lazy val isAdmin = onlineUsers get sender contains admin_id_fix_me
+      lazy val isAdmin = (onlineUsers get sender).exists(admins.contains(_))
 
       if (isUsersOwnPosts || isAdmin) {
         val (_possibleOldMessage, modifiedPosts) = posts.partition(_.ts == m.ts)

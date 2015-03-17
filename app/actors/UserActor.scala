@@ -20,10 +20,7 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
 
   var pingPongPoisonPill = createPingPongPoisonPillSchedule
 
-  /**
-   * admin uids
-   */
-  val admins: List[Long] = List(5, 6, 7, 8, 13)
+
 
   /**
    * at most 10 call per 10 seconds allowed
@@ -53,7 +50,7 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
      * from channel
      */
     case Message(_uid, s, c, ts) if _channelsActrs.contains(sender) =>
-      val canEdit = admins.contains(uid) || (uid == _uid)
+      val canEdit = UserActor.admins.contains(uid) || (uid == _uid)
       out ! Json.obj(
       "type" -> "message",
       "uid" -> _uid,
@@ -151,7 +148,7 @@ class UserActor(uid: Long, channels: Map[Long, ActorRef], out: ActorRef) extends
 
   //fixme
   def handleCmd(s: String) = s match {
-    case "/x-restart" if admins.contains(uid) =>
+    case "/x-restart" if UserActor.admins.contains(uid) =>
       import scala.sys.process._
       "/gang/bin/start-shebang.sh".run()
       true
@@ -189,4 +186,8 @@ object UserActor {
 
   object PingTimeOut
 
+  /**
+   * admin uids
+   */
+  val admins: List[Long] = List(5, 6, 7, 8, 13)
 }
